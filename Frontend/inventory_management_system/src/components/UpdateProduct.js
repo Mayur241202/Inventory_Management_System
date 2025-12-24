@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { NavLink, useParams, useNavigate } from 'react-router-dom';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function UpdateProduct() {
     const [productName, setProductName] = useState("");
@@ -36,7 +37,7 @@ export default function UpdateProduct() {
         const getProduct = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const res = await fetch(`http://localhost:3001/products/${id}`, {
+                const res = await fetch(`${API_URL}/products/${id}`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -84,7 +85,7 @@ export default function UpdateProduct() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3001/updateproduct/${id}`, {
+            const response = await fetch(`${API_URL}/updateproduct/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

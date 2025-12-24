@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function Signup({ onSignupSuccess }) {
     const [username, setUsername] = useState("");
@@ -34,7 +35,7 @@ export default function Signup({ onSignupSuccess }) {
         setError("");
 
         try {
-            const res = await fetch("http://localhost:3001/register", {
+            const res = await fetch(`${API_URL}/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

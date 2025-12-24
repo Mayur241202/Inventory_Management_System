@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function InsertProduct() {
     const [productName, setProductName] = useState("");
@@ -47,7 +48,7 @@ export default function InsertProduct() {
 
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch("http://localhost:3001/insertproduct", {
+            const res = await fetch(`${API_URL}/insertproduct`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export default function Products({ onSetSearchHandler }) {
   const [productData, setProductData] = useState([]);
@@ -23,7 +24,7 @@ export default function Products({ onSetSearchHandler }) {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:3001/products', {
+      const res = await fetch(`${API_URL}/products`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +80,7 @@ export default function Products({ onSetSearchHandler }) {
     try {
       setDeleting(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/deleteproduct/${productToDelete._id}`, {
+      const response = await fetch(`${API_URL}/deleteproduct/${productToDelete._id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
