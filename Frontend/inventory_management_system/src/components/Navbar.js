@@ -1,20 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export default function Navbar({ title, onSearch }) {
+export default function Navbar({ onSearch, showSearch = false }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      console.log('Search Query:', searchQuery); // For debugging
-      onSearch(searchQuery); // Pass the query to the parent component
-    } else {
-      console.log('Please enter a search term.');
+  // Check auth on mount and whenever storage changes
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
+      if (token && userData) {
+        setIsAuthenticated(true);
+        setUser(JSON.parse(userData));
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for storage changes (logout in other tabs, etc)
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
+  }, []);
+
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    // Trigger search on every change, including when empty
+    if (onSearch) {
+      onSearch(query);
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setIsAuthenticated(false);
+    setUser(null);
+    navigate('/');
+  };
+
   return (
-    <nav className="navbar navbar-expand-lg bg-danger shadow-sm">
+    <nav className="navbar navbar-expand-lg bg-danger shadow-sm sticky-top">
       <div className="container-fluid">
         {/* Toggler for Mobile View */}
         <button
@@ -37,33 +70,68 @@ export default function Navbar({ title, onSearch }) {
                 My Store
               </a>
             </li>
-            <li className="nav-item">
-              <a className="nav-link text-white fs-5 fw-medium px-3 hover-link" href="/products">
-                Products
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link text-white fs-5 fw-medium px-3 hover-link" href="/about">
-                About
-              </a>
-            </li>
+            {isAuthenticated && (
+              <>
+                <li className="nav-item">
+                  <a className="nav-link text-white fs-5 fw-medium px-3 hover-link" href="/products">
+                    Products
+                  </a>
+                </li>
+                <li className="nav-item">
+                  <a className="nav-link text-white fs-5 fw-medium px-3 hover-link" href="/about">
+                    About
+                  </a>
+                </li>
+              </>
+            )}
           </ul>
-          <form className="d-flex" role="search" onSubmit={handleSearch}>
+          
+          {/* Show search only on Products page and when authenticated */}
+          {isAuthenticated && showSearch && (
             <input
-              className="form-control me-2 rounded-pill border-0 shadow-sm"
+              className="form-control me-3 rounded-pill border-0 shadow-sm"
               type="search"
-              placeholder="Search"
+              placeholder="Search products..."
               aria-label="Search"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
+              style={{ maxWidth: '250px' }}
             />
-            <button
-              className="btn btn-light text-danger rounded-pill px-4 shadow-sm fw-bold"
-              type="submit"
-            >
-              Search
-            </button>
-          </form>
+          )}
+
+          <ul className="navbar-nav ms-auto">
+            {isAuthenticated ? (
+              <>
+                <li className="nav-item">
+                  <span className="nav-link text-white fs-5 fw-medium px-3">
+                    Welcome, {user?.username}!
+                  </span>
+                </li>
+                <li className="nav-item">
+                  <button
+                    className="nav-link btn text-white fs-5 fw-medium px-3"
+                    onClick={handleLogout}
+                    style={{ border: 'none', background: 'none', cursor: 'pointer' }}
+                  >
+                    Logout
+                  </button>
+                </li>
+              </>
+            ) : (
+              <>
+                <li className="nav-item">
+                  <a className="nav-link text-white fs-5 fw-medium px-3 hover-link" href="/login">
+                    Login
+                  </a>
+                </li>
+                <li className="nav-item">
+                  <a className="nav-link text-white fs-5 fw-medium px-3 hover-link" href="/signup">
+                    Sign Up
+                  </a>
+                </li>
+              </>
+            )}
+          </ul>
         </div>
       </div>
     </nav>

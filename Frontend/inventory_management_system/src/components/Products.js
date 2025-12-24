@@ -1,21 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import Navbar from './Navbar'; // Import the Navbar component
 
-export default function Products() {
+export default function Products({ onSetSearchHandler }) {
   const [productData, setProductData] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getProducts();
   }, []);
 
+  useEffect(() => {
+    if (onSetSearchHandler) {
+      onSetSearchHandler(() => handleSearch);
+    }
+  }, [productData, onSetSearchHandler]);
+
   const getProducts = async () => {
     try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
       const res = await fetch('http://localhost:3001/products', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -30,10 +39,17 @@ export default function Products() {
       }
     } catch (err) {
       console.log(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSearch = (query) => {
+    if (!query.trim()) {
+      setFilteredProducts(productData);
+      return;
+    }
+
     const lowercasedQuery = query.toLowerCase();
     const filtered = productData.filter(
       (product) =>
@@ -44,11 +60,17 @@ export default function Products() {
   };
 
   const deleteProduct = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:3001/deleteproduct/${id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -65,57 +87,122 @@ export default function Products() {
     }
   };
 
-  return (
-    <>
-      <Navbar title="My Store" onSearch={handleSearch} />
-      <div className="container-fluid p-5">
-        <h1>Products Inventory</h1>
-        <div className="add_button">
-          <NavLink to="/insertproduct" className="btn btn-primary fs-5">
-            + Add New Product
-          </NavLink>
-        </div>
-        <div className="overflow-auto mt-3" style={{ maxHeight: '38rem' }}>
-          <table className="table table-striped table-hover mt-3 fs-5">
-            <thead>
-              <tr className="tr_color">
-                <th scope="col">#</th>
-                <th scope="col">Product Name</th>
-                <th scope="col">Product Price</th>
-                <th scope="col">Product Barcode</th>
-                <th scope="col">Update</th>
-                <th scope="col">Delete</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.map((element, id) => (
-                <tr key={id}>
-                  <th scope="row">{id + 1}</th>
-                  <td>{element.ProductName}</td>
-                  <td>₹{element.ProductPrice.toLocaleString()}</td>
-                  <td>{element.ProductBarcode}</td>
-                  <td>
-                    <NavLink
-                      to={`/updateproduct/${element._id}`}
-                      className="btn btn-primary"
-                    >
-                      <i className="fa-solid fa-pen-to-square"></i>
-                    </NavLink>
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => deleteProduct(element._id)}
-                    >
-                      <i className="fa-solid fa-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  if (loading) {
+    return (
+      <div className="container-fluid p-5 text-center">
+        <div className="card-custom">
+          <div className="spinner-border mb-3" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h3 className="text-secondary">Loading Products...</h3>
         </div>
       </div>
-    </>
+    );
+  }
+
+  return (
+    <div className="container-fluid p-5">
+      <div className="card-custom">
+        {/* Header Section */}
+        <div className="d-flex justify-content-between align-items-center flex-wrap mb-4">
+          <div>
+            <h1 className="mb-2">Products Inventory</h1>
+            <p className="text-secondary mb-0">
+              <i className="fas fa-box me-2"></i>
+              Total Products: <strong>{filteredProducts.length}</strong>
+            </p>
+          </div>
+          <NavLink to="/insertproduct" className="btn btn-primary">
+            <i className="fas fa-plus me-2"></i>
+            Add New Product
+          </NavLink>
+        </div>
+
+        {/* Empty State */}
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-5">
+            <i className="fas fa-box-open fa-5x text-secondary mb-4" style={{ opacity: 0.3 }}></i>
+            <h3 className="text-secondary mb-3">No Products Found</h3>
+            <p className="text-secondary mb-4">
+              {productData.length === 0 
+                ? "Get started by adding your first product"
+                : "Try adjusting your search query"}
+            </p>
+            {productData.length === 0 && (
+              <NavLink to="/insertproduct" className="btn btn-primary">
+                <i className="fas fa-plus me-2"></i>
+                Add Your First Product
+              </NavLink>
+            )}
+          </div>
+        ) : (
+          <div className="table-container">
+            <div className="overflow-auto" style={{ maxHeight: '38rem' }}>
+              <table className="table table-hover mb-0">
+                <thead className="sticky-top">
+                  <tr className="tr_color">
+                    <th scope="col" className="text-center">#</th>
+                    <th scope="col">
+                      <i className="fas fa-tag me-2"></i>Product Name
+                    </th>
+                    <th scope="col">
+                      <i className="fas fa-rupee-sign me-2"></i>Price
+                    </th>
+                    <th scope="col">
+                      <i className="fas fa-barcode me-2"></i>Barcode
+                    </th>
+                    <th scope="col">
+                      <i className="fas fa-cubes me-2"></i>Quantity
+                    </th>
+                    <th scope="col" className="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProducts.map((element, id) => (
+                    <tr key={element._id}>
+                      <td className="text-center fw-bold text-secondary">{id + 1}</td>
+                      <td className="fw-semibold">{element.ProductName}</td>
+                      <td className="text-success fw-semibold">
+                        ₹{element.ProductPrice.toLocaleString()}
+                      </td>
+                      <td className="font-monospace">{element.ProductBarcode}</td>
+                      <td>
+                        <span className={`badge ${
+                          element.ProductQuantity < 10 
+                            ? 'bg-danger' 
+                            : element.ProductQuantity < 50 
+                            ? 'bg-warning text-dark' 
+                            : 'bg-success'
+                        } rounded-pill px-3 py-2`}>
+                          {element.ProductQuantity}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="d-flex gap-2 justify-content-center">
+                          <NavLink
+                            to={`/updateproduct/${element._id}`}
+                            className="btn btn-sm btn-primary"
+                            title="Edit Product"
+                          >
+                            <i className="fa-solid fa-pen-to-square"></i>
+                          </NavLink>
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={() => deleteProduct(element._id)}
+                            title="Delete Product"
+                          >
+                            <i className="fa-solid fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
