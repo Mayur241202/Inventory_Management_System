@@ -4,9 +4,11 @@ A comprehensive, full-stack Inventory Management System built with the **MERN st
 
 ---
 
-## Render : Deployable Link
+## 🌐 Live Application
 
-https://inventory-management-system-v2.onrender.com
+🔗 **Visit the live application:** [https://inventory-management-system-v2.onrender.com](https://inventory-management-system-v2.onrender.com)
+
+---
 
 ## 📋 Table of Contents
 
